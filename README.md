@@ -248,7 +248,7 @@ If you have any questions or need help, please:
 
 Made with ❤️ for organizing better Secret Santa events
 
-```
+```bash
 
 ### Deploy a Firebase
 ```bash
@@ -263,7 +263,7 @@ firebase functions:log
 
 ## Estructura del proyecto
 
-```
+```bash
 amigoinvisible/
 ├── functions/          # Cloud Functions
 │   ├── index.js       # Funciones principales
