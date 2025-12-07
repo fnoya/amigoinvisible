@@ -26,7 +26,7 @@ const sendEmailDemo = async (emailParams) => {
   // Simular respuesta de MailerSend
   return {
     headers: {
-      'x-message-id': 'demo_message_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+      'x-message-id': 'demo_message_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11)
     }
   };
 };

@@ -1005,7 +1005,9 @@
                         // Edit button
                         const editBtn = document.createElement('button');
                         editBtn.className = 'btn btn-primary btn-sm me-1';
-                        editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+                        const editIcon = document.createElement('i');
+                        editIcon.className = 'fas fa-edit';
+                        editBtn.appendChild(editIcon);
                         editBtn.addEventListener('click', () => {
                             showEditParticipantModal(participant.id, participant.name, participant.email);
                         });
@@ -1013,7 +1015,9 @@
                         // Delete button
                         const deleteBtn = document.createElement('button');
                         deleteBtn.className = 'btn btn-danger btn-sm';
-                        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                        const deleteIcon = document.createElement('i');
+                        deleteIcon.className = 'fas fa-trash';
+                        deleteBtn.appendChild(deleteIcon);
                         deleteBtn.addEventListener('click', () => {
                             removeParticipant(participant.id);
                         });
