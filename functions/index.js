@@ -34,6 +34,18 @@ const sendEmailDemo = async (emailParams) => {
 // Importar funciones de eventos
 const eventFunctions = require('./events');
 
+// Función para escapar HTML y prevenir XSS
+const escapeHtml = (text) => {
+  if (text == null) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;');
+};
+
 // Función para agregar participante
 exports.addParticipant = functions.https.onCall(async (data, context) => {
   // Verificar autenticación
@@ -275,7 +287,8 @@ exports.updateParticipant = functions.https.onCall(async (data, context) => {
         const assignment = doc.data();
         const updates = {};
         
-        if (assignment.giverEmail === oldEmail) {
+        // Case-insensitive comparison
+        if (assignment.giverEmail.toLowerCase() === oldEmail.toLowerCase()) {
           updates.giverEmail = newEmail.toLowerCase();
         }
         
@@ -306,37 +319,45 @@ exports.updateParticipant = functions.https.onCall(async (data, context) => {
           const sentFrom = new Sender(DEFAULT_FROM_EMAIL, DEFAULT_FROM_NAME);
           const recipients = [new Recipient(newEmail.toLowerCase(), participantData.name)];
 
+          // Escapar datos para prevenir XSS en emails
+          const safeEventName = escapeHtml(eventData.name);
+          const safeParticipantName = escapeHtml(participantData.name);
+          const safeReceiverName = escapeHtml(assignment.receiverName);
+          const safeDate = escapeHtml(eventData.date);
+          const safeSuggestedAmount = escapeHtml(eventData.suggestedAmount);
+          const safeCustomMessage = escapeHtml(eventData.customMessage);
+
           const emailParams = new EmailParams()
             .setFrom(sentFrom)
             .setTo(recipients)
             .setReplyTo(sentFrom)
-            .setSubject(`🎁 Tu amigo invisible para ${eventData.name}`)
+            .setSubject(`🎁 Tu amigo invisible para ${safeEventName}`)
             .setHtml(`
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h2 style="color: #d73527; text-align: center;">🎁 Tu amigo invisible para ${eventData.name}</h2>
-                <p style="font-size: 18px;">¡Hola ${participantData.name}!</p>
+                <h2 style="color: #d73527; text-align: center;">🎁 Tu amigo invisible para ${safeEventName}</h2>
+                <p style="font-size: 18px;">¡Hola ${safeParticipantName}!</p>
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
                   <p style="font-size: 16px; margin: 0;">Te ha tocado regalarle a:</p>
-                  <p style="font-size: 24px; font-weight: bold; color: #d73527; margin: 10px 0;">${assignment.receiverName}</p>
+                  <p style="font-size: 24px; font-weight: bold; color: #d73527; margin: 10px 0;">${safeReceiverName}</p>
                 </div>
-                ${eventData.date ? `<p><strong>📅 Fecha del intercambio:</strong> ${eventData.date}</p>` : ''}
-                ${eventData.suggestedAmount ? `<p><strong>💰 Monto sugerido:</strong> ${eventData.suggestedAmount}</p>` : ''}
-                ${eventData.customMessage ? `<div style="background: #e8f4fd; padding: 15px; border-radius: 5px; margin: 15px 0;"><p><strong>Mensaje del organizador:</strong></p><p>${eventData.customMessage}</p></div>` : ''}
+                ${eventData.date ? `<p><strong>📅 Fecha del intercambio:</strong> ${safeDate}</p>` : ''}
+                ${eventData.suggestedAmount ? `<p><strong>💰 Monto sugerido:</strong> ${safeSuggestedAmount}</p>` : ''}
+                ${eventData.customMessage ? `<div style="background: #e8f4fd; padding: 15px; border-radius: 5px; margin: 15px 0;"><p><strong>Mensaje del organizador:</strong></p><p>${safeCustomMessage}</p></div>` : ''}
                 <p style="margin-top: 30px;">¡Que disfrutes del intercambio! 🎄</p>
                 <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
                 <p style="font-size: 12px; color: #666;">Este email fue enviado automáticamente por el sistema Amigo Invisible.</p>
               </div>
             `)
             .setText(`
-              Tu amigo invisible para ${eventData.name}
+              Tu amigo invisible para ${safeEventName}
               
-              ¡Hola ${participantData.name}!
+              ¡Hola ${safeParticipantName}!
               
-              Te ha tocado regalarle a: ${assignment.receiverName}
+              Te ha tocado regalarle a: ${safeReceiverName}
               
-              ${eventData.date ? `Fecha del intercambio: ${eventData.date}` : ''}
-              ${eventData.suggestedAmount ? `Monto sugerido: ${eventData.suggestedAmount}` : ''}
-              ${eventData.customMessage ? `Mensaje del organizador: ${eventData.customMessage}` : ''}
+              ${eventData.date ? `Fecha del intercambio: ${safeDate}` : ''}
+              ${eventData.suggestedAmount ? `Monto sugerido: ${safeSuggestedAmount}` : ''}
+              ${eventData.customMessage ? `Mensaje del organizador: ${safeCustomMessage}` : ''}
               
               ¡Que disfrutes del intercambio!
             `);

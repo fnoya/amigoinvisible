@@ -975,16 +975,31 @@
                 const participantsList = document.getElementById('participantsList');
                 
                 if (response.data.success && response.data.participants && response.data.participants.length > 0) {
-                    participantsList.innerHTML = response.data.participants.map(participant => `
+                    participantsList.innerHTML = response.data.participants.map(participant => {
+                        // Escape HTML to prevent XSS
+                        const escapeHtml = (text) => {
+                            const div = document.createElement('div');
+                            div.textContent = text;
+                            return div.innerHTML;
+                        };
+                        
+                        const safeName = escapeHtml(participant.name);
+                        const safeEmail = escapeHtml(participant.email);
+                        
+                        return `
                         <div class="card mb-2">
                             <div class="card-body py-2">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <strong>${participant.name}</strong>
-                                        <small class="text-muted d-block">${participant.email}</small>
+                                        <strong>${safeName}</strong>
+                                        <small class="text-muted d-block">${safeEmail}</small>
                                     </div>
                                     <div>
-                                        <button class="btn btn-primary btn-sm me-1" onclick="showEditParticipantModal('${participant.id}', '${participant.name.replace(/'/g, "\\'")}', '${participant.email}')">
+                                        <button class="btn btn-primary btn-sm me-1" 
+                                                data-participant-id="${participant.id}" 
+                                                data-participant-name="${safeName}" 
+                                                data-participant-email="${safeEmail}"
+                                                onclick="showEditParticipantModal(this.dataset.participantId, this.dataset.participantName, this.dataset.participantEmail)">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         <button class="btn btn-danger btn-sm" onclick="removeParticipant('${participant.id}')">
@@ -994,7 +1009,7 @@
                                 </div>
                             </div>
                         </div>
-                    `).join('');
+                    `}).join('');
                 } else {
                     participantsList.innerHTML = `
                         <div class="text-center text-muted py-4">
