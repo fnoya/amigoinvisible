@@ -5,6 +5,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![MailerSend](https://img.shields.io/badge/MailerSend-0052CC?style=flat&logo=mail.ru&logoColor=white)](https://www.mailersend.com/)
+[![Deploy](https://github.com/yourusername/amigo-invisible/actions/workflows/deploy.yml/badge.svg)](https://github.com/yourusername/amigo-invisible/actions/workflows/deploy.yml)
 
 A complete Secret Santa (Amigo Invisible) web application built with Firebase and MailerSend. Organize gift exchanges effortlessly with automatic random assignment and email notifications.
 
@@ -111,6 +112,7 @@ firebase emulators:start --only hosting,auth,firestore,functions
 
 ### Deployment
 
+#### Manual Deployment
 ```bash
 # Deploy everything
 firebase deploy
@@ -120,6 +122,24 @@ firebase deploy --only functions
 
 # Deploy only hosting
 firebase deploy --only hosting
+```
+
+#### Automatic Deployment (CI/CD)
+
+This project includes GitHub Actions for automatic deployment:
+
+- **Push to main**: Automatically deploys to production
+- **Pull Requests**: Creates preview deployments and comments status
+
+**Setup Required**:
+1. Configure GitHub repository secrets (see [.github/DEPLOY_SETUP.md](.github/DEPLOY_SETUP.md))
+2. Required secrets:
+   - `FIREBASE_TOKEN` - Firebase CI token
+   - `MAILERSEND_API_KEY` - MailerSend API key
+
+Generate Firebase token:
+```bash
+firebase login:ci
 ```
 
 ## 🛡️ Security
