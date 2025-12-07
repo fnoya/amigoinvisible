@@ -10,6 +10,27 @@ const mailerSend = new MailerSend({
   apiKey: functions.config().mailersend?.api_key || process.env.MAILERSEND_API_KEY,
 });
 
+// Email por defecto para envíos (debe ser un dominio verificado en MailerSend)
+const DEFAULT_FROM_EMAIL = 'noreply@mail.invitacion15.fnoya.net';
+const DEFAULT_FROM_NAME = 'Amigo Invisible';
+
+// Función mock para demo en emuladores
+const sendEmailDemo = async (emailParams) => {
+  console.log('📧 DEMO MODE: Email que se enviaría:', {
+    from: emailParams._from,
+    to: emailParams._to,
+    subject: emailParams._subject,
+    html: emailParams._html?.substring(0, 100) + '...'
+  });
+  
+  // Simular respuesta de MailerSend
+  return {
+    headers: {
+      'x-message-id': 'demo_message_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+    }
+  };
+};
+
 // Importar funciones de eventos
 const eventFunctions = require('./events');
 
@@ -165,6 +186,227 @@ exports.removeParticipant = functions.https.onCall(async (data, context) => {
     return { success: true, message: 'Participante eliminado exitosamente' };
   } catch (error) {
     console.error('Error al eliminar participante:', error);
+    throw new functions.https.HttpsError('internal', 'Error interno del servidor');
+  }
+});
+
+// Función para actualizar email de participante
+exports.updateParticipant = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Usuario debe estar autenticado');
+  }
+
+  const { eventId, participantId, newEmail } = data;
+
+  if (!eventId || !participantId || !newEmail) {
+    throw new functions.https.HttpsError('invalid-argument', 'Faltan datos requeridos');
+  }
+
+  // Validar formato de email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(newEmail)) {
+    throw new functions.https.HttpsError('invalid-argument', 'Formato de email inválido');
+  }
+
+  try {
+    // Verificar permisos
+    const eventDoc = await admin.firestore().collection('events').doc(eventId).get();
+    
+    if (!eventDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Evento no encontrado');
+    }
+
+    const eventData = eventDoc.data();
+    if (eventData.organizerEmail !== context.auth.token.email) {
+      throw new functions.https.HttpsError('permission-denied', 'No tienes permisos para este evento');
+    }
+
+    // Obtener datos actuales del participante
+    const participantDoc = await admin.firestore()
+      .collection('events')
+      .doc(eventId)
+      .collection('participants')
+      .doc(participantId)
+      .get();
+
+    if (!participantDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Participante no encontrado');
+    }
+
+    const participantData = participantDoc.data();
+    const oldEmail = participantData.email;
+
+    // Verificar que el nuevo email no esté ya en uso por otro participante
+    if (oldEmail.toLowerCase() !== newEmail.toLowerCase()) {
+      const duplicateQuery = await admin.firestore()
+        .collection('events')
+        .doc(eventId)
+        .collection('participants')
+        .where('email', '==', newEmail.toLowerCase())
+        .get();
+
+      if (!duplicateQuery.empty) {
+        throw new functions.https.HttpsError('already-exists', 'Este email ya está registrado para otro participante');
+      }
+    }
+
+    // Actualizar email del participante
+    await admin.firestore()
+      .collection('events')
+      .doc(eventId)
+      .collection('participants')
+      .doc(participantId)
+      .update({
+        email: newEmail.toLowerCase(),
+        updatedAt: new Date().toISOString()
+      });
+
+    // Si hay asignaciones, actualizar las referencias de email
+    const assignmentsSnapshot = await admin.firestore()
+      .collection('events')
+      .doc(eventId)
+      .collection('assignments')
+      .get();
+
+    if (!assignmentsSnapshot.empty) {
+      const batch = admin.firestore().batch();
+      
+      assignmentsSnapshot.forEach(doc => {
+        const assignment = doc.data();
+        const updates = {};
+        
+        if (assignment.giverEmail === oldEmail) {
+          updates.giverEmail = newEmail.toLowerCase();
+        }
+        
+        if (Object.keys(updates).length > 0) {
+          batch.update(doc.ref, updates);
+        }
+      });
+
+      await batch.commit();
+    }
+
+    // Si ya se enviaron emails, reenviar al nuevo email
+    let emailResent = false;
+    if (eventData.status === 'emails_sent' || eventData.status === 'sorted') {
+      // Buscar la asignación del participante
+      const assignmentQuery = await admin.firestore()
+        .collection('events')
+        .doc(eventId)
+        .collection('assignments')
+        .where('giverEmail', '==', newEmail.toLowerCase())
+        .get();
+
+      if (!assignmentQuery.empty) {
+        const assignment = assignmentQuery.docs[0].data();
+        
+        try {
+          // Configurar sender y recipients
+          const sentFrom = new Sender(DEFAULT_FROM_EMAIL, DEFAULT_FROM_NAME);
+          const recipients = [new Recipient(newEmail.toLowerCase(), participantData.name)];
+
+          const emailParams = new EmailParams()
+            .setFrom(sentFrom)
+            .setTo(recipients)
+            .setReplyTo(sentFrom)
+            .setSubject(`🎁 Tu amigo invisible para ${eventData.name}`)
+            .setHtml(`
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #d73527; text-align: center;">🎁 Tu amigo invisible para ${eventData.name}</h2>
+                <p style="font-size: 18px;">¡Hola ${participantData.name}!</p>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <p style="font-size: 16px; margin: 0;">Te ha tocado regalarle a:</p>
+                  <p style="font-size: 24px; font-weight: bold; color: #d73527; margin: 10px 0;">${assignment.receiverName}</p>
+                </div>
+                ${eventData.date ? `<p><strong>📅 Fecha del intercambio:</strong> ${eventData.date}</p>` : ''}
+                ${eventData.suggestedAmount ? `<p><strong>💰 Monto sugerido:</strong> ${eventData.suggestedAmount}</p>` : ''}
+                ${eventData.customMessage ? `<div style="background: #e8f4fd; padding: 15px; border-radius: 5px; margin: 15px 0;"><p><strong>Mensaje del organizador:</strong></p><p>${eventData.customMessage}</p></div>` : ''}
+                <p style="margin-top: 30px;">¡Que disfrutes del intercambio! 🎄</p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                <p style="font-size: 12px; color: #666;">Este email fue enviado automáticamente por el sistema Amigo Invisible.</p>
+              </div>
+            `)
+            .setText(`
+              Tu amigo invisible para ${eventData.name}
+              
+              ¡Hola ${participantData.name}!
+              
+              Te ha tocado regalarle a: ${assignment.receiverName}
+              
+              ${eventData.date ? `Fecha del intercambio: ${eventData.date}` : ''}
+              ${eventData.suggestedAmount ? `Monto sugerido: ${eventData.suggestedAmount}` : ''}
+              ${eventData.customMessage ? `Mensaje del organizador: ${eventData.customMessage}` : ''}
+              
+              ¡Que disfrutes del intercambio!
+            `);
+
+          // Verificar si estamos en modo demo
+          const apiKey = process.env.MAILERSEND_API_KEY || functions.config().mailersend?.api_key || 'demo_key';
+          const isDemoMode = apiKey === 'demo_key' || 
+                            apiKey.startsWith('demo_') ||
+                            !apiKey ||
+                            apiKey.length < 10;
+          
+          let response;
+          if (isDemoMode) {
+            response = await sendEmailDemo(emailParams);
+            console.log('📧 DEMO: Email simulado reenviado a', newEmail);
+          } else {
+            response = await mailerSend.email.send(emailParams);
+            console.log('📧 PRODUCTION: Email REAL reenviado a', newEmail);
+          }
+          
+          // Registrar el reenvío en los logs
+          await admin.firestore()
+            .collection('events')
+            .doc(eventId)
+            .collection('emailLogs')
+            .add({
+              participantId: participantId,
+              participantName: participantData.name,
+              participantEmail: newEmail.toLowerCase(),
+              messageId: response.headers['x-message-id'],
+              status: 'sent',
+              sentAt: new Date(),
+              assignmentId: assignmentQuery.docs[0].id,
+              resent: true,
+              reason: 'email_updated'
+            });
+
+          emailResent = true;
+        } catch (emailError) {
+          console.error(`Error reenviando email a ${newEmail}:`, emailError);
+          
+          // Registrar el error
+          await admin.firestore()
+            .collection('events')
+            .doc(eventId)
+            .collection('emailLogs')
+            .add({
+              participantId: participantId,
+              participantName: participantData.name,
+              participantEmail: newEmail.toLowerCase(),
+              status: 'failed',
+              error: emailError.message,
+              sentAt: new Date(),
+              resent: true,
+              reason: 'email_updated'
+            });
+        }
+      }
+    }
+
+    return { 
+      success: true, 
+      message: 'Email del participante actualizado exitosamente',
+      emailResent: emailResent
+    };
+  } catch (error) {
+    console.error('Error al actualizar participante:', error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
     throw new functions.https.HttpsError('internal', 'Error interno del servidor');
   }
 });
