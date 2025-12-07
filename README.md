@@ -32,18 +32,21 @@ A complete Secret Santa (Amigo Invisible) web application built with Firebase an
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/yourusername/amigo-invisible.git
    cd amigo-invisible
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    cd functions && npm install && cd ..
    ```
 
 3. **Configure environment variables**
+
    ```bash
    # Create .env file in functions directory
    echo "MAILERSEND_API_KEY=your_mailersend_api_key_here" > functions/.env
@@ -52,18 +55,20 @@ A complete Secret Santa (Amigo Invisible) web application built with Firebase an
 4. **Configure Firebase**
    - Update `public/index.html` with your Firebase configuration
    - Set up Firebase Functions config:
+
    ```bash
    firebase functions:config:set mailersend.api_key="your_api_key_here"
    ```
 
 5. **Start development server**
+
    ```bash
    firebase emulators:start
    ```
 
 ## 🏗️ Project Structure
 
-```
+```txt
 amigoinvisible/
 ├── functions/              # Cloud Functions
 │   ├── index.js            # Main functions entry point
@@ -94,7 +99,8 @@ The application uses MailerSend for email delivery. You'll need:
 3. Update the `DEFAULT_FROM_EMAIL` in `functions/events.js`
 
 ### Webhook URL for tracking
-```
+
+```url
 https://your-project-id.cloudfunctions.net/mailersendWebhook
 ```
 
@@ -113,6 +119,7 @@ firebase emulators:start --only hosting,auth,firestore,functions
 ### Deployment
 
 #### Manual Deployment
+
 ```bash
 # Deploy everything
 firebase deploy
@@ -132,12 +139,14 @@ This project includes GitHub Actions for automatic deployment:
 - **Pull Requests**: Creates preview deployments and comments status
 
 **Setup Required**:
+
 1. Configure GitHub repository secrets (see [.github/DEPLOY_SETUP.md](.github/DEPLOY_SETUP.md))
 2. Required secrets:
    - `FIREBASE_TOKEN` - Firebase CI token
    - `MAILERSEND_API_KEY` - MailerSend API key
 
 Generate Firebase token:
+
 ```bash
 firebase login:ci
 ```
@@ -211,6 +220,7 @@ See [HUs.md](HUs.md) for detailed user stories and acceptance criteria.
 ### Debug Mode
 
 Enable detailed logging by setting:
+
 ```javascript
 // In browser console
 localStorage.setItem('debug', 'true');
@@ -237,6 +247,7 @@ If you have any questions or need help, please:
 ---
 
 Made with ❤️ for organizing better Secret Santa events
+
 ```
 
 ### Deploy a Firebase
@@ -245,11 +256,13 @@ npm run deploy
 ```
 
 ### Ver logs de Functions
+
 ```bash
 firebase functions:log
 ```
 
 ## Estructura del proyecto
+
 ```
 amigoinvisible/
 ├── functions/          # Cloud Functions
