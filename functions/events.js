@@ -453,31 +453,78 @@ exports.mailersendWebhook = functions.https.onRequest(async (req, res) => {
   }
 
   try {
-    const events = req.body;
+    console.log('📧 Webhook received:', JSON.stringify(req.body, null, 2));
+    
+    let events = req.body;
+    
+    // Handle different payload structures
+    if (!events) {
+      console.warn('📧 Webhook: No body received');
+      res.status(400).send('No payload received');
+      return;
+    }
+    
+    // If it's not an array, try to wrap it in an array or extract the events array
+    if (!Array.isArray(events)) {
+      if (events.data && Array.isArray(events.data)) {
+        events = events.data;
+      } else if (events.events && Array.isArray(events.events)) {
+        events = events.events;
+      } else {
+        // Single event object
+        events = [events];
+      }
+    }
+    
+    console.log(`📧 Processing ${events.length} webhook events`);
     
     for (const event of events) {
-      const messageId = event.data.message.id;
-      const status = event.type; // sent, delivered, hard_bounced, etc.
-      
-      // Buscar el log correspondiente
-      const logsQuery = await admin.firestore()
-        .collectionGroup('emailLogs')
-        .where('messageId', '==', messageId)
-        .get();
+      try {
+        // Safely extract message ID
+        let messageId;
+        if (event.data && event.data.message && event.data.message.id) {
+          messageId = event.data.message.id;
+        } else if (event.message_id) {
+          messageId = event.message_id;
+        } else if (event.id) {
+          messageId = event.id;
+        }
+        
+        if (!messageId) {
+          console.warn('📧 Webhook: No message ID found in event:', JSON.stringify(event, null, 2));
+          continue;
+        }
+        
+        const status = event.type || event.event || 'unknown';
+        
+        console.log(`📧 Processing event: ${status} for message: ${messageId}`);
+        
+        // Buscar el log correspondiente
+        const logsQuery = await admin.firestore()
+          .collectionGroup('emailLogs')
+          .where('messageId', '==', messageId)
+          .get();
 
-      if (!logsQuery.empty) {
-        const logDoc = logsQuery.docs[0];
-        await logDoc.ref.update({
-          status: status,
-          updatedAt: new Date(),
-          webhookData: event.data
-        });
+        if (!logsQuery.empty) {
+          const logDoc = logsQuery.docs[0];
+          await logDoc.ref.update({
+            status: status,
+            updatedAt: new Date(),
+            webhookData: event.data || event
+          });
+          console.log(`📧 Updated log for message: ${messageId} with status: ${status}`);
+        } else {
+          console.warn(`📧 No log found for message ID: ${messageId}`);
+        }
+      } catch (eventError) {
+        console.error(`📧 Error processing individual webhook event:`, eventError, 'Event:', JSON.stringify(event, null, 2));
       }
     }
 
     res.status(200).send('OK');
   } catch (error) {
-    console.error('Error procesando webhook:', error);
+    console.error('📧 Error procesando webhook:', error);
+    console.error('📧 Request body:', JSON.stringify(req.body, null, 2));
     res.status(500).send('Error interno');
   }
 });
