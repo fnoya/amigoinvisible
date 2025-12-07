@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amigo Invisible</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .main-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin: 2rem auto;
+            max-width: 1000px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px 15px 0 0;
+            text-align: center;
+        }
+        
+        .content {
+            padding: 2rem;
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+        
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e9ecef;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: bold;
+        }
+        
+        .step.active .step-number {
+            background: #28a745;
+            color: white;
+        }
+        
+        .step.completed .step-number {
+            background: #007bff;
+            color: white;
+        }
+        
+        .participant-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid #dee2e6;
+        }
+        
+        .assignment-card {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .email-log {
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            border-radius: 5px;
+        }
+        
+        .email-sent { background: #d4edda; border: 1px solid #c3e6cb; }
+        .email-failed { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .email-delivered { background: #d1ecf1; border: 1px solid #bee5eb; }
+        
+        .btn-custom {
+            border-radius: 25px;
+            padding: 0.5rem 2rem;
+            font-weight: 500;
+        }
+        
+        .auth-container {
+            max-width: 400px;
+            margin: 5rem auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Pantalla de autenticación -->
+    <div id="authContainer" class="auth-container">
+        <div class="text-center mb-4">
+            <h2><i class="fas fa-gift text-danger"></i> Amigo Invisible</h2>
+            <p class="text-muted">Organiza tu intercambio de regalos</p>
+        </div>
+        
+        <div id="loginForm">
+            <h4 class="mb-3">Iniciar Sesión</h4>
+            <form id="loginFormElement">
+                <div class="mb-3">
+                    <label for="loginEmail" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="loginEmail" required>
+                </div>
+                <div class="mb-3">
+                    <label for="loginPassword" class="form-label">Contraseña</label>
+                    <input type="password" class="form-control" id="loginPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 btn-custom">
+                    <span class="login-text">Iniciar Sesión</span>
+                    <span class="login-loading hidden"><i class="loading"></i> Iniciando...</span>
+                </button>
+            </form>
+            <hr>
+            <button class="btn btn-link w-100" onclick="showRegisterForm()">
+                ¿No tienes cuenta? Regístrate
+            </button>
+        </div>
+        
+        <div id="registerForm" class="hidden">
+            <h4 class="mb-3">Crear Cuenta</h4>
+            <form id="registerFormElement">
+                <div class="mb-3">
+                    <label for="registerEmail" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="registerEmail" required>
+                </div>
+                <div class="mb-3">
+                    <label for="registerPassword" class="form-label">Contraseña</label>
+                    <input type="password" class="form-control" id="registerPassword" required minlength="6">
+                </div>
+                <div class="mb-3">
+                    <label for="confirmPassword" class="form-label">Confirmar Contraseña</label>
+                    <input type="password" class="form-control" id="confirmPassword" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100 btn-custom">
+                    <span class="register-text">Crear Cuenta</span>
+                    <span class="register-loading hidden"><i class="loading"></i> Creando...</span>
+                </button>
+            </form>
+            <hr>
+            <button class="btn btn-link w-100" onclick="showLoginForm()">
+                ¿Ya tienes cuenta? Inicia sesión
+            </button>
+        </div>
+    </div>
+
+    <!-- Aplicación principal -->
+    <div id="mainApp" class="main-container hidden">
+        <!-- Header -->
+        <div class="header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1><i class="fas fa-gift"></i> Amigo Invisible</h1>
+                    <p class="mb-0" id="userWelcome">Bienvenido</p>
+                </div>
+                <button class="btn btn-light btn-sm" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </button>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Selector de evento -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <select class="form-select" id="eventSelector" onchange="selectEvent()">
+                        <option value="">Selecciona un evento</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary btn-custom" onclick="showNewEventModal()">
+                        <i class="fas fa-plus"></i> Nuevo Evento
+                    </button>
+                </div>
+            </div>
+
+            <!-- Indicador de pasos -->
+            <div class="step-indicator" id="stepIndicator">
+                <div class="step" id="step1">
+                    <div class="step-number">1</div>
+                    <small>Configurar Evento</small>
+                </div>
+                <div class="step" id="step2">
+                    <div class="step-number">2</div>
+                    <small>Agregar Participantes</small>
+                </div>
+                <div class="step" id="step3">
+                    <div class="step-number">3</div>
+                    <small>Ejecutar Sorteo</small>
+                </div>
+                <div class="step" id="step4">
+                    <div class="step-number">4</div>
+                    <small>Enviar Emails</small>
+                </div>
+            </div>
+
+            <!-- Contenido dinámico -->
+            <div id="eventContent">
+                <div class="text-center text-muted">
+                    <i class="fas fa-arrow-up fa-2x mb-3"></i>
+                    <p>Selecciona o crea un evento para comenzar</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para nuevo evento -->
+    <div class="modal fade" id="newEventModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nuevo Evento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="newEventForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="eventName" class="form-label">Nombre del evento *</label>
+                            <input type="text" class="form-control" id="eventName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventDate" class="form-label">Fecha del intercambio</label>
+                            <input type="date" class="form-control" id="eventDate">
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventAmount" class="form-label">Monto sugerido</label>
+                            <input type="text" class="form-control" id="eventAmount" placeholder="Ej: $50, €30, etc.">
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventMessage" class="form-label">Mensaje personalizado</label>
+                            <textarea class="form-control" id="eventMessage" rows="3" 
+                                placeholder="Mensaje que aparecerá en los emails..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="create-text">Crear Evento</span>
+                            <span class="create-loading hidden"><i class="loading"></i> Creando...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Funciones globales para navegación -->
+    <script>
+        // Funciones de navegación (deben estar fuera del módulo para ser accesibles)
+        window.showLoginForm = () => {
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+        };
+
+        window.showRegisterForm = () => {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.remove('hidden');
+        };
+
+        window.showAuthContainer = () => {
+            document.getElementById('authContainer').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        };
+
+        window.showMainApp = () => {
+            document.getElementById('authContainer').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            if (window.currentUser) {
+                document.getElementById('userWelcome').textContent = `Bienvenido, ${window.currentUser.email}`;
+            }
+        };
+    </script>
+    
+    <!-- Firebase SDKs -->
+    <script type="module">
+        // Aquí se incluirá la lógica de Firebase
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js';
+        import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-functions.js';
+
+        // Configuración de Firebase para producción
+        const firebaseConfig = {
+            apiKey: "AIzaSyCYf-AU9QPNb7hzsmC5NgFgP06WokXe2ZA",
+            authDomain: "amigoinvisible-elmejorgrupo.firebaseapp.com",
+            projectId: "amigoinvisible-elmejorgrupo",
+            storageBucket: "amigoinvisible-elmejorgrupo.firebasestorage.app",
+            messagingSenderId: "604170061270",
+            appId: "1:604170061270:web:7cd3be12c8da0b58151077"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const functions = getFunctions(app);
+
+        // Producción - sin emuladores
+        import { getFirestore } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js';
+        
+        // Configuración para producción (sin emuladores)
+        console.log('🚀 Configurado para PRODUCCIÓN');
+        
+        const db = getFirestore(app);
+        
+        // Variables globales
+        window.auth = auth;
+        window.functions = functions;
+        window.httpsCallable = httpsCallable;
+        window.currentUser = null;
+        window.currentEvent = null;
+        window.currentEventData = null;
+
+        // Listener de autenticación
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.currentUser = user;
+                showMainApp();
+                loadUserEvents();
+            } else {
+                window.currentUser = null;
+                showAuthContainer();
+            }
+        });
+
+        // Eventos de los formularios
+        document.getElementById('loginFormElement').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                document.querySelector('.login-text').classList.add('hidden');
+                document.querySelector('.login-loading').classList.remove('hidden');
+                
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                alert('Error al iniciar sesión: ' + error.message);
+            } finally {
+                document.querySelector('.login-text').classList.remove('hidden');
+                document.querySelector('.login-loading').classList.add('hidden');
+            }
+        });
+
+        document.getElementById('registerFormElement').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                alert('Las contraseñas no coinciden');
+                return;
+            }
+            
+            try {
+                document.querySelector('.register-text').classList.add('hidden');
+                document.querySelector('.register-loading').classList.remove('hidden');
+                
+                await createUserWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                alert('Error al crear cuenta: ' + error.message);
+            } finally {
+                document.querySelector('.register-text').classList.remove('hidden');
+                document.querySelector('.register-loading').classList.add('hidden');
+            }
+        });
+
+        window.logout = async () => {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error('Error al cerrar sesión:', error);
+            }
+        };
+
+        // Funciones de la aplicación principal
+        window.loadUserEvents = async () => {
+            try {
+                const getUserEvents = httpsCallable(functions, 'getUserEvents');
+                const result = await getUserEvents();
+                
+                const selector = document.getElementById('eventSelector');
+                selector.innerHTML = '<option value="">Selecciona un evento</option>';
+                
+                result.data.events.forEach(event => {
+                    const option = document.createElement('option');
+                    option.value = event.id;
+                    option.textContent = event.name;
+                    selector.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error al cargar eventos:', error);
+            }
+        };
+
+        window.selectEvent = async () => {
+            const eventId = document.getElementById('eventSelector').value;
+            if (!eventId) {
+                window.currentEvent = null;
+                window.currentEventData = null;
+                document.getElementById('eventContent').innerHTML = `
+                    <div class="text-center text-muted">
+                        <i class="fas fa-arrow-up fa-2x mb-3"></i>
+                        <p>Selecciona o crea un evento para comenzar</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            try {
+                window.currentEvent = eventId;
+                const getEvent = httpsCallable(functions, 'getEvent');
+                const result = await getEvent({ eventId });
+                window.currentEventData = result.data.event;
+                
+                await loadEventData();
+            } catch (error) {
+                console.error('Error al cargar evento:', error);
+                alert('Error al cargar el evento');
+            }
+        };
+
+        window.loadEventData = async () => {
+            // Aquí se cargará el contenido específico del evento
+            // Esta función se expandirá en la siguiente parte
+            updateStepIndicator();
+            loadEventContent();
+        };
+
+        window.updateStepIndicator = () => {
+            // Lógica para actualizar el indicador de pasos
+            const status = window.currentEventData?.status || 'draft';
+            
+            // Reset all steps
+            for(let i = 1; i <= 4; i++) {
+                const step = document.getElementById(`step${i}`);
+                step.classList.remove('active', 'completed');
+            }
+            
+            // Update based on status
+            switch(status) {
+                case 'draft':
+                    document.getElementById('step1').classList.add('active');
+                    break;
+                case 'participants_added':
+                    document.getElementById('step1').classList.add('completed');
+                    document.getElementById('step2').classList.add('active');
+                    break;
+                case 'sorted':
+                    document.getElementById('step1').classList.add('completed');
+                    document.getElementById('step2').classList.add('completed');
+                    document.getElementById('step3').classList.add('active');
+                    break;
+                case 'emails_sent':
+                    for(let i = 1; i <= 4; i++) {
+                        document.getElementById(`step${i}`).classList.add('completed');
+                    }
+                    break;
+            }
+        };
+
+        window.loadEventContent = () => {
+            // Esta función se expandirá para mostrar el contenido apropiado
+            const content = document.getElementById('eventContent');
+            
+            // Determinar qué botones mostrar según el estado del evento
+            const status = window.currentEventData.status;
+            let actionButtons = '';
+            
+            if (status === 'sorted' || status === 'emails_sent') {
+                // Si ya hay sorteo, mostrar botones para gestionar participantes, ver sorteo y ver resultados
+                actionButtons = `
+                    <div class="row">
+                        <div class="col-md-4">
+                            <button class="btn btn-primary" onclick="loadParticipantsView()">
+                                <i class="fas fa-users"></i> Gestionar Participantes
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-warning" onclick="loadRaffleView()">
+                                <i class="fas fa-dice"></i> Ver Sorteo
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-success" onclick="loadRaffleResults()">
+                                <i class="fas fa-list-check"></i> Ver Resultados
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Estado inicial, solo gestionar participantes y realizar sorteo
+                actionButtons = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <button class="btn btn-primary" onclick="loadParticipantsView()">
+                                <i class="fas fa-users"></i> Gestionar Participantes
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <button class="btn btn-warning" onclick="loadRaffleView()">
+                                <i class="fas fa-dice"></i> Realizar Sorteo
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            content.innerHTML = `
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">${window.currentEventData.name}</h5>
+                        <p class="card-text">Estado: <span class="badge ${getStatusBadgeClass(status)}">${getStatusText(status)}</span></p>
+                        <p class="card-text">Creado: ${(() => {
+                            try {
+                                if (!window.currentEventData.createdAt) return 'Fecha no disponible';
+                                if (typeof window.currentEventData.createdAt === 'string') {
+                                    return new Date(window.currentEventData.createdAt).toLocaleDateString();
+                                }
+                                if (window.currentEventData.createdAt.seconds) {
+                                    return new Date(window.currentEventData.createdAt.seconds * 1000).toLocaleDateString();
+                                }
+                                return new Date(window.currentEventData.createdAt).toLocaleDateString();
+                            } catch (e) {
+                                console.error('Error parsing date:', e, window.currentEventData.createdAt);
+                                return 'Error en fecha';
+                            }
+                        })()}</p>
+                        ${actionButtons}
+                    </div>
+                </div>
+            `;
+        };
+
+        window.getStatusBadgeClass = (status) => {
+            switch (status) {
+                case 'draft': return 'bg-secondary';
+                case 'sorted': return 'bg-warning';
+                case 'emails_sent': return 'bg-success';
+                default: return 'bg-secondary';
+            }
+        };
+
+        window.getStatusText = (status) => {
+            switch (status) {
+                case 'draft': return 'Borrador';
+                case 'sorted': return 'Sorteo Realizado';
+                case 'emails_sent': return 'Emails Enviados';
+                default: return 'Desconocido';
+            }
+        };
+
+        window.loadRaffleResults = async () => {
+            try {
+                // Obtener asignaciones del sorteo
+                const getAssignmentsFn = httpsCallable(window.functions, 'getAssignments');
+                const assignmentsResponse = await getAssignmentsFn({
+                    eventId: window.currentEventData.id
+                });
+                
+                if (!assignmentsResponse.data.success) {
+                    alert('Error al cargar asignaciones: ' + (assignmentsResponse.data.message || 'Error desconocido'));
+                    return;
+                }
+                
+                // Obtener logs de emails (opcional - puede fallar si no hay logs)
+                let emailLogs = [];
+                try {
+                    const getEmailLogsFn = httpsCallable(window.functions, 'getEmailLogs');
+                    const emailLogsResponse = await getEmailLogsFn({
+                        eventId: window.currentEventData.id
+                    });
+                    
+                    if (emailLogsResponse.data.success && emailLogsResponse.data.emailLogs) {
+                        emailLogs = emailLogsResponse.data.emailLogs;
+                    }
+                } catch (emailError) {
+                    console.warn('Error al cargar logs de emails:', emailError);
+                    // Continúar sin logs de emails
+                }
+                
+                showDetailedRaffleResults(assignmentsResponse.data.assignments, emailLogs);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                let errorMessage = 'Error al cargar resultados';
+                if (error.message) {
+                    errorMessage += ': ' + error.message;
+                }
+                alert(errorMessage);
+            }
+        };
+
+        window.showDetailedRaffleResults = (assignments, emailLogs) => {
+            const content = document.getElementById('eventContent');
+            content.innerHTML = `
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Resultados del Sorteo - ${window.currentEventData.name}</h5>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Sorteo completado:</strong> ${assignments.length} asignaciones realizadas
+                        </div>
+                        
+                        <h6>Asignaciones:</h6>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Participante</th>
+                                        <th>Email</th>
+                                        <th>Amigo Invisible</th>
+                                        <th>Estado Email</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${assignments.map(assignment => {
+                                        const emailLog = emailLogs.find(log => log.participantEmail === assignment.giverEmail);
+                                        const emailStatus = emailLog ? emailLog.status : 'unknown';
+                                        const statusBadge = emailStatus === 'sent' ? 'bg-success' : 
+                                                          emailStatus === 'failed' ? 'bg-danger' : 'bg-secondary';
+                                        const statusText = emailStatus === 'sent' ? 'Enviado' : 
+                                                         emailStatus === 'failed' ? 'Error' : 'Sin info';
+                                        
+                                        return `
+                                            <tr>
+                                                <td><strong>${assignment.giverName}</strong></td>
+                                                <td><small class="text-muted">${assignment.giverEmail}</small></td>
+                                                <td><strong>${assignment.receiverName}</strong></td>
+                                                <td>
+                                                    <span class="badge ${statusBadge}">${statusText}</span>
+                                                    ${emailLog && emailLog.error ? `<br><small class="text-danger">${emailLog.error}</small>` : ''}
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button class="btn btn-secondary" onclick="loadEventView()">
+                                <i class="fas fa-arrow-left"></i> Volver al Evento
+                            </button>
+                            <button class="btn btn-info ms-2" onclick="loadRaffleView()">
+                                <i class="fas fa-dice"></i> Ver Opciones de Sorteo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        // Modal de nuevo evento
+        window.showNewEventModal = () => {
+            const modal = new bootstrap.Modal(document.getElementById('newEventModal'));
+            modal.show();
+        };
+
+        document.getElementById('newEventForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const eventData = {
+                name: document.getElementById('eventName').value,
+                date: document.getElementById('eventDate').value,
+                suggestedAmount: document.getElementById('eventAmount').value,
+                customMessage: document.getElementById('eventMessage').value
+            };
+            
+            try {
+                document.querySelector('.create-text').classList.add('hidden');
+                document.querySelector('.create-loading').classList.remove('hidden');
+                
+                const createEvent = httpsCallable(functions, 'createEvent');
+                const result = await createEvent(eventData);
+                
+                const modal = bootstrap.Modal.getInstance(document.getElementById('newEventModal'));
+                modal.hide();
+                
+                // Limpiar formulario
+                document.getElementById('newEventForm').reset();
+                
+                // Recargar eventos
+                await loadUserEvents();
+                
+                // Seleccionar el nuevo evento
+                document.getElementById('eventSelector').value = result.data.eventId;
+                await selectEvent();
+                
+            } catch (error) {
+                console.error('Error al crear evento:', error);
+                alert('Error al crear evento: ' + error.message);
+            } finally {
+                document.querySelector('.create-text').classList.remove('hidden');
+                document.querySelector('.create-loading').classList.add('hidden');
+            }
+        });
+
+        // Funciones de gestión de vistas
+        window.loadParticipantsView = async () => {
+            const content = document.getElementById('eventContent');
+            content.innerHTML = `
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Participantes - ${window.currentEventData.name}</h5>
+                        
+                        <!-- Agregar participante -->
+                        <div class="mb-4">
+                            <h6>Agregar Participante</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <input type="text" id="participantName" class="form-control" placeholder="Nombre completo" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="email" id="participantEmail" class="form-control" placeholder="Email" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-success" onclick="addParticipant()">
+                                        <i class="fas fa-plus"></i> Agregar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Lista de participantes -->
+                        <div class="mb-3">
+                            <h6>Lista de Participantes</h6>
+                            <div id="participantsList">
+                                <div class="text-center">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Botones de acción -->
+                        <div class="d-flex justify-content-between">
+                            <button class="btn btn-secondary" onclick="loadEventView()">
+                                <i class="fas fa-arrow-left"></i> Volver al Evento
+                            </button>
+                            <button class="btn btn-warning" onclick="loadRaffleView()">
+                                <i class="fas fa-gift"></i> Ir al Sorteo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Cargar participantes existentes
+            await loadParticipants();
+        };
+
+        window.addParticipant = async () => {
+            const name = document.getElementById('participantName').value.trim();
+            const email = document.getElementById('participantEmail').value.trim();
+            
+            if (!name || !email) {
+                alert('Por favor complete todos los campos');
+                return;
+            }
+            
+            try {
+                const addParticipantFn = httpsCallable(window.functions, 'addParticipant');
+                const response = await addParticipantFn({
+                    eventId: window.currentEventData.id,
+                    name: name,
+                    email: email
+                });
+                
+                if (response.data.success) {
+                    document.getElementById('participantName').value = '';
+                    document.getElementById('participantEmail').value = '';
+                    await loadParticipants();
+                } else {
+                    alert('Error al agregar participante: ' + response.data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al agregar participante: ' + error.message);
+            }
+        };
+
+        window.removeParticipant = async (participantId) => {
+            if (!confirm('¿Estás seguro de que quieres eliminar este participante?')) {
+                return;
+            }
+            
+            try {
+                const removeParticipantFn = httpsCallable(window.functions, 'removeParticipant');
+                const response = await removeParticipantFn({
+                    eventId: window.currentEventData.id,
+                    participantId: participantId
+                });
+                
+                if (response.data.success) {
+                    await loadParticipants();
+                } else {
+                    alert('Error al eliminar participante: ' + response.data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al eliminar participante: ' + error.message);
+            }
+        };
+
+        window.loadParticipants = async () => {
+            try {
+                const getParticipantsFn = httpsCallable(window.functions, 'getParticipants');
+                const response = await getParticipantsFn({
+                    eventId: window.currentEventData.id
+                });
+                
+                console.log('Participants response:', response.data);
+                const participantsList = document.getElementById('participantsList');
+                
+                if (response.data.success && response.data.participants && response.data.participants.length > 0) {
+                    participantsList.innerHTML = response.data.participants.map(participant => `
+                        <div class="card mb-2">
+                            <div class="card-body py-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>${participant.name}</strong>
+                                        <small class="text-muted d-block">${participant.email}</small>
+                                    </div>
+                                    <button class="btn btn-danger btn-sm" onclick="removeParticipant('${participant.id}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    participantsList.innerHTML = `
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-users fa-2x mb-2"></i>
+                            <p>No hay participantes aún. ¡Agrega el primero!</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading participants:', error);
+                document.getElementById('participantsList').innerHTML = `
+                    <div class="alert alert-danger">
+                        Error al cargar participantes: ${error.message}
+                    </div>
+                `;
+            }
+        };
+
+        window.loadEventView = async () => {
+            await loadEvent(window.currentEventData.id);
+        };
+
+        window.loadEvent = async (eventId) => {
+            try {
+                window.currentEvent = eventId;
+                const getEvent = httpsCallable(window.functions, 'getEvent');
+                const result = await getEvent({ eventId });
+                window.currentEventData = result.data.event;
+                
+                await loadEventData();
+            } catch (error) {
+                console.error('Error al cargar evento:', error);
+                alert('Error al cargar el evento');
+            }
+        };
+
+        window.loadRaffleView = async () => {
+            const content = document.getElementById('eventContent');
+            content.innerHTML = `
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Sorteo - ${window.currentEventData.name}</h5>
+                        
+                        <div id="raffleContent">
+                            <div class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Botones de navegación -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <button class="btn btn-secondary" onclick="loadParticipantsView()">
+                                <i class="fas fa-arrow-left"></i> Gestionar Participantes
+                            </button>
+                            <button class="btn btn-primary" onclick="loadEventView()">
+                                <i class="fas fa-home"></i> Volver al Evento
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Cargar estado del sorteo
+            await loadRaffleStatus();
+        };
+
+        window.loadRaffleStatus = async () => {
+            try {
+                // Primero verificar si ya hay participantes
+                const getParticipantsFn = httpsCallable(window.functions, 'getParticipants');
+                const participantsResponse = await getParticipantsFn({
+                    eventId: window.currentEventData.id
+                });
+                
+                const raffleContent = document.getElementById('raffleContent');
+                
+                if (!participantsResponse.data.success || !participantsResponse.data.participants || participantsResponse.data.participants.length < 2) {
+                    raffleContent.innerHTML = `
+                        <div class="alert alert-warning text-center">
+                            <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                            <h6>No se puede realizar el sorteo</h6>
+                            <p>Se necesitan al menos 2 participantes para realizar el sorteo.</p>
+                            <p>Participantes actuales: ${participantsResponse.data.participants ? participantsResponse.data.participants.length : 0}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Verificar si ya existe un sorteo
+                const getAssignmentsFn = httpsCallable(window.functions, 'getAssignments');
+                const assignmentsResponse = await getAssignmentsFn({
+                    eventId: window.currentEventData.id
+                });
+                
+                if (assignmentsResponse.data.success && assignmentsResponse.data.assignments && assignmentsResponse.data.assignments.length > 0) {
+                    // Ya hay sorteo realizado
+                    showRaffleResults(assignmentsResponse.data.assignments);
+                } else {
+                    // Mostrar opción para ejecutar sorteo
+                    showRaffleExecute(participantsResponse.data.participants.length);
+                }
+                
+            } catch (error) {
+                console.error('Error loading raffle status:', error);
+                document.getElementById('raffleContent').innerHTML = `
+                    <div class="alert alert-danger">
+                        Error al cargar estado del sorteo: ${error.message}
+                    </div>
+                `;
+            }
+        };
+
+        window.showRaffleExecute = (participantCount) => {
+            const raffleContent = document.getElementById('raffleContent');
+            raffleContent.innerHTML = `
+                <div class="text-center">
+                    <i class="fas fa-gift fa-3x text-warning mb-4"></i>
+                    <h4>¡Listo para el sorteo!</h4>
+                    <p class="lead">Hay ${participantCount} participantes registrados.</p>
+                    <p>El sorteo asignará aleatoriamente quién será el amigo invisible de cada participante.</p>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Importante:</strong> Una vez ejecutado el sorteo, se enviarán los emails automáticamente y no se puede deshacer.
+                    </div>
+                    
+                    <button class="btn btn-warning btn-lg" onclick="executeRaffle()" id="executeRaffleBtn">
+                        <i class="fas fa-magic"></i> Ejecutar Sorteo y Enviar Emails
+                    </button>
+                </div>
+            `;
+        };
+
+        window.showRaffleResults = (assignments) => {
+            const raffleContent = document.getElementById('raffleContent');
+            raffleContent.innerHTML = `
+                <div class="alert alert-success text-center mb-4">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <h5>¡Sorteo Completado!</h5>
+                    <p>Los emails han sido enviados a todos los participantes.</p>
+                </div>
+                
+                <h6>Asignaciones realizadas:</h6>
+                <div class="list-group">
+                    ${assignments.map(assignment => `
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>${assignment.giverName}</strong>
+                                    <small class="text-muted d-block">${assignment.giverEmail}</small>
+                                </div>
+                                <div class="text-center">
+                                    <i class="fas fa-arrow-right text-muted"></i>
+                                </div>
+                                <div class="text-end">
+                                    <strong>${assignment.receiverName}</strong>
+                                    <small class="text-muted d-block">Amigo invisible</small>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="mt-4 text-center">
+                    <button class="btn btn-info" onclick="checkEmailStatus()">
+                        <i class="fas fa-envelope"></i> Ver Estado de Emails
+                    </button>
+                </div>
+            `;
+        };
+
+        window.executeRaffle = async () => {
+            console.log('🔍 executeRaffle called');
+            const btn = document.getElementById('executeRaffleBtn');
+            const originalText = btn.innerHTML;
+            
+            console.log('🔍 Button found:', btn);
+            console.log('🔍 Current event data:', window.currentEventData);
+            
+            if (!confirm('¿Estás seguro de que quieres ejecutar el sorteo? Se enviarán emails automáticamente y no se puede deshacer.')) {
+                console.log('🔍 User cancelled');
+                return;
+            }
+            
+            console.log('🔍 User confirmed, starting raffle...');
+            
+            try {
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Ejecutando sorteo...';
+                btn.disabled = true;
+                
+                console.log('🔍 Calling executeRaffle function...');
+                const executeRaffleFn = httpsCallable(window.functions, 'executeRaffle');
+                const response = await executeRaffleFn({
+                    eventId: window.currentEventData.id
+                });
+                
+                console.log('🔍 executeRaffle response:', response);
+                
+                if (response.data.success) {
+                    console.log('🔍 Raffle success, sending emails...');
+                    // Enviar emails automáticamente
+                    await sendRaffleEmails();
+                } else {
+                    console.error('🔍 Raffle failed:', response.data);
+                    alert('Error al ejecutar sorteo: ' + (response.data.message || 'Error desconocido'));
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+                
+            } catch (error) {
+                console.error('Error executing raffle:', error);
+                let errorMessage = 'Error al ejecutar sorteo';
+                
+                if (error.code === 'failed-precondition') {
+                    errorMessage = error.message;
+                } else if (error.message) {
+                    errorMessage += ': ' + error.message;
+                }
+                
+                alert(errorMessage);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        };
+
+        window.sendRaffleEmails = async () => {
+            console.log('📧 sendRaffleEmails called');
+            try {
+                console.log('📧 Calling sendSecretSantaEmails function...');
+                const sendEmailsFn = httpsCallable(window.functions, 'sendSecretSantaEmails');
+                const response = await sendEmailsFn({
+                    eventId: window.currentEventData.id
+                });
+                
+                console.log('📧 sendSecretSantaEmails response:', response);
+                
+                if (response.data.success) {
+                    console.log('📧 Emails sent successfully, reloading status...');
+                    await loadRaffleStatus(); // Recargar para mostrar resultados
+                } else {
+                    let errorMessage = 'Error al enviar emails';
+                    if (response.data.message) {
+                        errorMessage += ': ' + response.data.message;
+                    }
+                    console.error('📧 Email sending failed:', errorMessage);
+                    alert('Sorteo completado pero ' + errorMessage);
+                    await loadRaffleStatus(); // Mostrar resultados aunque fallen los emails
+                }
+            } catch (error) {
+                console.error('Error sending emails:', error);
+                
+                let errorMessage = 'error al enviar emails';
+                
+                // Detectar errores específicos de MailerSend
+                if (error.message && error.message.includes('mailersend')) {
+                    errorMessage = 'MailerSend no está configurado (modo demo)';
+                } else if (error.message && error.message.includes('unauthorized')) {
+                    errorMessage = 'error de autenticación del servicio de emails (MailerSend)';
+                } else if (error.message) {
+                    errorMessage += ': ' + error.message;
+                }
+                
+                alert('Sorteo completado pero ' + errorMessage + '. Las asignaciones se guardaron correctamente.');
+                await loadRaffleStatus(); // Mostrar resultados aunque fallen los emails
+            }
+        };
+
+        window.checkEmailStatus = async () => {
+            try {
+                const getEmailLogsFn = httpsCallable(window.functions, 'getEmailLogs');
+                const response = await getEmailLogsFn({
+                    eventId: window.currentEventData.id
+                });
+                
+                if (response.data.success) {
+                    showEmailStatus(response.data.emailLogs);
+                } else {
+                    alert('Error al obtener estado de emails: ' + response.data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al obtener estado de emails: ' + error.message);
+            }
+        };
+
+        window.showEmailStatus = (emailLogs) => {
+            const content = document.getElementById('eventContent');
+            content.innerHTML = `
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Estado de Emails - ${window.currentEventData.name}</h5>
+                        
+                        <div class="list-group">
+                            ${emailLogs.map(log => `
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>${log.participantName}</strong>
+                                            <small class="text-muted d-block">${log.participantEmail}</small>
+                                        </div>
+                                        <span class="badge ${log.status === 'sent' ? 'bg-success' : 'bg-danger'}">
+                                            ${log.status === 'sent' ? 'Enviado' : 'Error'}
+                                        </span>
+                                    </div>
+                                    ${log.error ? `<small class="text-danger">Error: ${log.error}</small>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button class="btn btn-secondary" onclick="loadRaffleView()">
+                                <i class="fas fa-arrow-left"></i> Volver al Sorteo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "name": "amigoinvisible",
+  "version": "1.0.0",
+  "description": "Sistema de amigo invisible con Firebase y MailerSend",
+  "main": "index.js",
+  "scripts": {
+    "serve": "npx firebase emulators:start",
+    "serve:functions": "npx firebase emulators:start --only functions",
+    "serve:hosting": "npx firebase emulators:start --only hosting",
+    "deploy": "npx firebase deploy",
+    "deploy:functions": "npx firebase deploy --only functions",
+    "deploy:hosting": "npx firebase deploy --only hosting",
+    "logs": "npx firebase functions:log",
+    "build:functions": "cd functions && npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["amigo-invisible", "firebase", "mailersend", "sorteo"],
+  "author": "",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "firebase": "^12.6.0",
+    "firebase-admin": "^13.6.0",
+    "firebase-tools": "^14.27.0",
+    "mailersend": "^2.6.0"
+  }
+}

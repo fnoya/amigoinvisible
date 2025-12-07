@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Solo el organizador autenticado puede acceder a sus eventos
+    match /events/{eventId} {
+      allow read, write: if request.auth != null 
+        && request.auth.token.email == resource.data.organizerEmail;
+      
+      match /participants/{participantId} {
+        allow read, write: if request.auth != null 
+          && request.auth.token.email == get(/databases/$(database)/documents/events/$(eventId)).data.organizerEmail;
+      }
+      
+      match /assignments/{assignmentId} {
+        allow read, write: if request.auth != null 
+          && request.auth.token.email == get(/databases/$(database)/documents/events/$(eventId)).data.organizerEmail;
+      }
+      
+      match /emailLogs/{logId} {
+        allow read, write: if request.auth != null 
+          && request.auth.token.email == get(/databases/$(database)/documents/events/$(eventId)).data.organizerEmail;
+      }
+    }
+  }
+}
