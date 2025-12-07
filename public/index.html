@@ -286,6 +286,42 @@
         </div>
     </div>
 
+    <!-- Modal para editar participante -->
+    <div class="modal fade" id="editParticipantModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Participante</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editParticipantForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="editParticipantName" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="editParticipantName" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editParticipantEmail" class="form-label">Nuevo Email *</label>
+                            <input type="email" class="form-control" id="editParticipantEmail" required>
+                        </div>
+                        <div class="alert alert-info" id="editParticipantWarning" style="display: none;">
+                            <i class="fas fa-info-circle"></i>
+                            <span id="editParticipantWarningText"></span>
+                        </div>
+                        <input type="hidden" id="editParticipantId">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="edit-text">Actualizar Email</span>
+                            <span class="edit-loading hidden"><i class="loading"></i> Actualizando...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -740,6 +776,11 @@
             }
         });
 
+        document.getElementById('editParticipantForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await updateParticipant();
+        });
+
         // Funciones de gestión de vistas
         window.loadParticipantsView = async () => {
             const content = document.getElementById('eventContent');
@@ -848,6 +889,81 @@
             }
         };
 
+        window.showEditParticipantModal = (participantId, participantName, participantEmail) => {
+            document.getElementById('editParticipantId').value = participantId;
+            document.getElementById('editParticipantName').value = participantName;
+            document.getElementById('editParticipantEmail').value = participantEmail;
+            
+            // Mostrar advertencia si ya se enviaron emails
+            const status = window.currentEventData?.status;
+            const warningDiv = document.getElementById('editParticipantWarning');
+            const warningText = document.getElementById('editParticipantWarningText');
+            
+            if (status === 'emails_sent' || status === 'sorted') {
+                warningDiv.style.display = 'block';
+                if (status === 'emails_sent') {
+                    warningText.textContent = 'Ya se enviaron las invitaciones. Si cambias el email, se reenviará la invitación al nuevo correo.';
+                } else {
+                    warningText.textContent = 'El sorteo ya fue realizado. Si cambias el email, se actualizarán las asignaciones.';
+                }
+            } else {
+                warningDiv.style.display = 'none';
+            }
+            
+            const modal = new bootstrap.Modal(document.getElementById('editParticipantModal'));
+            modal.show();
+        };
+
+        window.updateParticipant = async () => {
+            const participantId = document.getElementById('editParticipantId').value;
+            const newEmail = document.getElementById('editParticipantEmail').value.trim();
+            
+            if (!newEmail) {
+                alert('Por favor ingresa un email válido');
+                return;
+            }
+            
+            const status = window.currentEventData?.status;
+            if (status === 'emails_sent') {
+                if (!confirm('¿Estás seguro? Se reenviará la invitación al nuevo email.')) {
+                    return;
+                }
+            }
+            
+            try {
+                document.querySelector('.edit-text').classList.add('hidden');
+                document.querySelector('.edit-loading').classList.remove('hidden');
+                
+                const updateParticipantFn = httpsCallable(window.functions, 'updateParticipant');
+                const response = await updateParticipantFn({
+                    eventId: window.currentEventData.id,
+                    participantId: participantId,
+                    newEmail: newEmail
+                });
+                
+                if (response.data.success) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editParticipantModal'));
+                    modal.hide();
+                    
+                    await loadParticipants();
+                    
+                    if (response.data.emailResent) {
+                        alert('Email actualizado y la invitación ha sido reenviada exitosamente.');
+                    } else {
+                        alert('Email actualizado exitosamente.');
+                    }
+                } else {
+                    alert('Error al actualizar email: ' + response.data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al actualizar email: ' + error.message);
+            } finally {
+                document.querySelector('.edit-text').classList.remove('hidden');
+                document.querySelector('.edit-loading').classList.add('hidden');
+            }
+        };
+
         window.loadParticipants = async () => {
             try {
                 const getParticipantsFn = httpsCallable(window.functions, 'getParticipants');
@@ -859,21 +975,62 @@
                 const participantsList = document.getElementById('participantsList');
                 
                 if (response.data.success && response.data.participants && response.data.participants.length > 0) {
-                    participantsList.innerHTML = response.data.participants.map(participant => `
-                        <div class="card mb-2">
-                            <div class="card-body py-2">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <strong>${participant.name}</strong>
-                                        <small class="text-muted d-block">${participant.email}</small>
-                                    </div>
-                                    <button class="btn btn-danger btn-sm" onclick="removeParticipant('${participant.id}')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('');
+                    // Clear existing content
+                    participantsList.innerHTML = '';
+                    
+                    response.data.participants.forEach(participant => {
+                        // Create card element
+                        const card = document.createElement('div');
+                        card.className = 'card mb-2';
+                        
+                        const cardBody = document.createElement('div');
+                        cardBody.className = 'card-body py-2';
+                        
+                        const flexContainer = document.createElement('div');
+                        flexContainer.className = 'd-flex justify-content-between align-items-center';
+                        
+                        // Create info div
+                        const infoDiv = document.createElement('div');
+                        const nameStrong = document.createElement('strong');
+                        nameStrong.textContent = participant.name;
+                        const emailSmall = document.createElement('small');
+                        emailSmall.className = 'text-muted d-block';
+                        emailSmall.textContent = participant.email;
+                        infoDiv.appendChild(nameStrong);
+                        infoDiv.appendChild(emailSmall);
+                        
+                        // Create button div
+                        const buttonDiv = document.createElement('div');
+                        
+                        // Edit button
+                        const editBtn = document.createElement('button');
+                        editBtn.className = 'btn btn-primary btn-sm me-1';
+                        const editIcon = document.createElement('i');
+                        editIcon.className = 'fas fa-edit';
+                        editBtn.appendChild(editIcon);
+                        editBtn.addEventListener('click', () => {
+                            showEditParticipantModal(participant.id, participant.name, participant.email);
+                        });
+                        
+                        // Delete button
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'btn btn-danger btn-sm';
+                        const deleteIcon = document.createElement('i');
+                        deleteIcon.className = 'fas fa-trash';
+                        deleteBtn.appendChild(deleteIcon);
+                        deleteBtn.addEventListener('click', () => {
+                            removeParticipant(participant.id);
+                        });
+                        
+                        buttonDiv.appendChild(editBtn);
+                        buttonDiv.appendChild(deleteBtn);
+                        
+                        flexContainer.appendChild(infoDiv);
+                        flexContainer.appendChild(buttonDiv);
+                        cardBody.appendChild(flexContainer);
+                        card.appendChild(cardBody);
+                        participantsList.appendChild(card);
+                    });
                 } else {
                     participantsList.innerHTML = `
                         <div class="text-center text-muted py-4">
