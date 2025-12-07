@@ -975,41 +975,58 @@
                 const participantsList = document.getElementById('participantsList');
                 
                 if (response.data.success && response.data.participants && response.data.participants.length > 0) {
-                    participantsList.innerHTML = response.data.participants.map(participant => {
-                        // Escape HTML to prevent XSS
-                        const escapeHtml = (text) => {
-                            const div = document.createElement('div');
-                            div.textContent = text;
-                            return div.innerHTML;
-                        };
+                    // Clear existing content
+                    participantsList.innerHTML = '';
+                    
+                    response.data.participants.forEach(participant => {
+                        // Create card element
+                        const card = document.createElement('div');
+                        card.className = 'card mb-2';
                         
-                        const safeName = escapeHtml(participant.name);
-                        const safeEmail = escapeHtml(participant.email);
+                        const cardBody = document.createElement('div');
+                        cardBody.className = 'card-body py-2';
                         
-                        return `
-                        <div class="card mb-2">
-                            <div class="card-body py-2">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <strong>${safeName}</strong>
-                                        <small class="text-muted d-block">${safeEmail}</small>
-                                    </div>
-                                    <div>
-                                        <button class="btn btn-primary btn-sm me-1" 
-                                                data-participant-id="${participant.id}" 
-                                                data-participant-name="${safeName}" 
-                                                data-participant-email="${safeEmail}"
-                                                onclick="showEditParticipantModal(this.dataset.participantId, this.dataset.participantName, this.dataset.participantEmail)">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-danger btn-sm" onclick="removeParticipant('${participant.id}')">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `}).join('');
+                        const flexContainer = document.createElement('div');
+                        flexContainer.className = 'd-flex justify-content-between align-items-center';
+                        
+                        // Create info div
+                        const infoDiv = document.createElement('div');
+                        const nameStrong = document.createElement('strong');
+                        nameStrong.textContent = participant.name;
+                        const emailSmall = document.createElement('small');
+                        emailSmall.className = 'text-muted d-block';
+                        emailSmall.textContent = participant.email;
+                        infoDiv.appendChild(nameStrong);
+                        infoDiv.appendChild(emailSmall);
+                        
+                        // Create button div
+                        const buttonDiv = document.createElement('div');
+                        
+                        // Edit button
+                        const editBtn = document.createElement('button');
+                        editBtn.className = 'btn btn-primary btn-sm me-1';
+                        editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+                        editBtn.addEventListener('click', () => {
+                            showEditParticipantModal(participant.id, participant.name, participant.email);
+                        });
+                        
+                        // Delete button
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'btn btn-danger btn-sm';
+                        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                        deleteBtn.addEventListener('click', () => {
+                            removeParticipant(participant.id);
+                        });
+                        
+                        buttonDiv.appendChild(editBtn);
+                        buttonDiv.appendChild(deleteBtn);
+                        
+                        flexContainer.appendChild(infoDiv);
+                        flexContainer.appendChild(buttonDiv);
+                        cardBody.appendChild(flexContainer);
+                        card.appendChild(cardBody);
+                        participantsList.appendChild(card);
+                    });
                 } else {
                     participantsList.innerHTML = `
                         <div class="text-center text-muted py-4">
