@@ -286,9 +286,7 @@ exports.sendSecretSantaEmails = functions.https.onCall(async (data, context) => 
                           !apiKey ||
                           apiKey.length < 10; // API keys reales son más largas
         
-        console.log('📧 API Key check:', { 
-          hasApiKey: !!apiKey, 
-          keyLength: apiKey?.length || 0, 
+        console.log('📧 Email sending mode:', { 
           isDemoMode,
           isEmulator: process.env.FUNCTIONS_EMULATOR === 'true'
         });
