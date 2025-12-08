@@ -1,5 +1,9 @@
 name: Deploy to Firebase
 
+permissions:
+  contents: read
+  issues: write
+
 on:
   push:
     branches: [ main ]
