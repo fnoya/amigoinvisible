@@ -3,19 +3,34 @@
 # Script de build para generar configuración de Firebase
 # Este script reemplaza las variables del template con valores reales
 
-# Cargar variables de .env.local si existe (para desarrollo)
-if [ -f ".env.local" ]; then
-    echo "🔧 Cargando variables desde .env.local..."
+# Debug: Mostrar estado inicial
+echo "🔍 Debug: FIREBASE_API_KEY inicial = ${FIREBASE_API_KEY:0:20}..."
+echo "🔍 Debug: .env.local existe? $([ -f ".env.local" ] && echo "Sí" || echo "No")"
+
+# Cargar variables de .env.local solo si las variables no están ya definidas (para desarrollo local)
+if [ -f ".env.local" ] && [ -z "$FIREBASE_API_KEY" ]; then
+    echo "🔧 Cargando variables desde .env.local (desarrollo local)..."
     export $(cat .env.local | grep -v '^#' | xargs)
+else
+    echo "🔧 Usando variables de entorno existentes (CI/CD o producción)..."
 fi
 
-# Variables de entorno (estas deberían estar en el entorno de deployment)
-FIREBASE_API_KEY="${FIREBASE_API_KEY:-AIzaSyCYf-AU9QPNb7hzsmC5NgFgP06WokXe2ZA}"
-FIREBASE_AUTH_DOMAIN="${FIREBASE_AUTH_DOMAIN:-amigoinvisible-elmejorgrupo.firebaseapp.com}"
-FIREBASE_PROJECT_ID="${FIREBASE_PROJECT_ID:-amigoinvisible-elmejorgrupo}"
-FIREBASE_STORAGE_BUCKET="${FIREBASE_STORAGE_BUCKET:-amigoinvisible-elmejorgrupo.firebasestorage.app}"
-FIREBASE_MESSAGING_SENDER_ID="${FIREBASE_MESSAGING_SENDER_ID:-604170061270}"
-FIREBASE_APP_ID="${FIREBASE_APP_ID:-1:604170061270:web:7cd3be12c8da0b58151077}"
+echo "🔍 Debug: FIREBASE_API_KEY después de load = ${FIREBASE_API_KEY:0:20}..."
+
+# Validar que las variables requeridas estén definidas
+if [ -z "$FIREBASE_API_KEY" ] || [ -z "$FIREBASE_PROJECT_ID" ]; then
+    echo "❌ Error: Variables de Firebase no están definidas"
+    echo "   Define FIREBASE_API_KEY, FIREBASE_PROJECT_ID, etc. en .env.local o en el entorno"
+    exit 1
+fi
+
+# Variables de entorno (ya cargadas desde .env.local o desde el entorno de CI/CD)
+FIREBASE_API_KEY="${FIREBASE_API_KEY}"
+FIREBASE_AUTH_DOMAIN="${FIREBASE_AUTH_DOMAIN}"
+FIREBASE_PROJECT_ID="${FIREBASE_PROJECT_ID}"
+FIREBASE_STORAGE_BUCKET="${FIREBASE_STORAGE_BUCKET}"
+FIREBASE_MESSAGING_SENDER_ID="${FIREBASE_MESSAGING_SENDER_ID}"
+FIREBASE_APP_ID="${FIREBASE_APP_ID}"
 
 # Generar config.js desde el template
 echo "🔧 Generando configuración de Firebase..."
