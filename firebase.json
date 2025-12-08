@@ -17,10 +17,14 @@
   ],
   "hosting": {
     "public": "public",
+    "predeploy": [
+      "./build-config.sh"
+    ],
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "**/config.template.js"
     ],
     "rewrites": [
       {

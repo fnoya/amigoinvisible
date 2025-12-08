@@ -47,6 +47,25 @@ A complete Secret Santa (Amigo Invisible) web application built with Firebase an
 
 3. **Configure environment variables**
 
+   For security, Firebase configuration is not stored in the repository. Set these environment variables:
+
+   ```bash
+   export FIREBASE_API_KEY="your-api-key"
+   export FIREBASE_AUTH_DOMAIN="your-project.firebaseapp.com" 
+   export FIREBASE_PROJECT_ID="your-project-id"
+   export FIREBASE_STORAGE_BUCKET="your-project.firebasestorage.app"
+   export FIREBASE_MESSAGING_SENDER_ID="your-sender-id"
+   export FIREBASE_APP_ID="your-app-id"
+   ```
+
+   Then generate the configuration file:
+
+   ```bash
+   ./build-config.sh
+   ```
+
+4. **Configure Firebase Functions environment**
+
    ```bash
    # Create .env file in functions directory
    echo "MAILERSEND_API_KEY=your_mailersend_api_key_here" > functions/.env

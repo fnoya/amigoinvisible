@@ -325,6 +325,9 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- Firebase config -->
+    <script src="config.js"></script>
+    
     <!-- Funciones globales para navegación -->
     <script>
         // Funciones de navegación (deben estar fuera del módulo para ser accesibles)
@@ -359,15 +362,8 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js';
         import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-functions.js';
 
-        // Configuración de Firebase para producción
-        const firebaseConfig = {
-            apiKey: "AIzaSyCYf-AU9QPNb7hzsmC5NgFgP06WokXe2ZA",
-            authDomain: "amigoinvisible-elmejorgrupo.firebaseapp.com",
-            projectId: "amigoinvisible-elmejorgrupo",
-            storageBucket: "amigoinvisible-elmejorgrupo.firebasestorage.app",
-            messagingSenderId: "604170061270",
-            appId: "1:604170061270:web:7cd3be12c8da0b58151077"
-        };
+        // Configuración de Firebase (cargada desde config.js)
+        const firebaseConfig = window.firebaseConfig;
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);

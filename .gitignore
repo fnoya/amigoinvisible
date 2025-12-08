@@ -9,6 +9,9 @@ functions/node_modules/
 .env.test.local
 .env.production.local
 
+# Firebase config generated (DO NOT COMMIT)
+public/config.js
+
 # Firebase
 .firebase/
 firebase-debug.log
