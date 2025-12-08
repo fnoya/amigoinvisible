@@ -20,7 +20,7 @@ if (!admin.apps.length) {
 
 // Configurar MailerSend
 const mailerSend = new MailerSend({
-  apiKey: process.env.MAILERSEND_API_KEY || functions.config().mailersend?.api_key || 'demo_key',
+  apiKey: process.env.MAILERSEND_API_KEY || 'demo_key',
 });
 
 // Email por defecto para envíos (debe ser un dominio verificado en MailerSend)
@@ -280,7 +280,7 @@ exports.sendSecretSantaEmails = functions.https.onCall(async (data, context) => 
           `);
 
         // Verificar si estamos en modo demo
-        const apiKey = process.env.MAILERSEND_API_KEY || functions.config().mailersend?.api_key || 'demo_key';
+        const apiKey = process.env.MAILERSEND_API_KEY || 'demo_key';
         const isDemoMode = apiKey === 'demo_key' || 
                           apiKey.startsWith('demo_') ||
                           !apiKey ||
@@ -359,7 +359,7 @@ exports.sendSecretSantaEmails = functions.https.onCall(async (data, context) => 
 
     const successCount = emailResults.filter(r => r.status === 'sent').length;
     const errorCount = emailResults.filter(r => r.status === 'failed').length;
-    const apiKey = process.env.MAILERSEND_API_KEY || functions.config().mailersend?.api_key || 'demo_key';
+    const apiKey = process.env.MAILERSEND_API_KEY || 'demo_key';
     const isDemoMode = apiKey === 'demo_key' || 
                       apiKey.startsWith('demo_') ||
                       !apiKey ||
