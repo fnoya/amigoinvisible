@@ -1,5 +1,16 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+
+// Load environment variables from .env file (for local development)
+// Must be loaded before any other module that uses env vars
+try {
+  const path = require('path');
+  require('dotenv').config({ path: path.join(__dirname, '.env') });
+  console.log('📧 MailerSend API Key loaded in index.js:', process.env.MAILERSEND_API_KEY ? 'YES' : 'NO');
+} catch (error) {
+  console.warn('Could not load .env file in index.js:', error.message);
+}
+
 const { MailerSend, EmailParams, Sender, Recipient } = require('mailersend');
 
 // Inicializar Firebase Admin
@@ -7,7 +18,7 @@ admin.initializeApp();
 
 // Configurar MailerSend
 const mailerSend = new MailerSend({
-  apiKey: functions.config().mailersend?.api_key || process.env.MAILERSEND_API_KEY,
+  apiKey: process.env.MAILERSEND_API_KEY || functions.config().mailersend?.api_key || 'demo_key',
 });
 
 // Email por defecto para envíos (debe ser un dominio verificado en MailerSend)
