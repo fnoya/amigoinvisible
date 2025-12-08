@@ -482,7 +482,9 @@ exports.mailersendWebhook = functions.https.onRequest(async (req, res) => {
       try {
         // Safely extract message ID
         let messageId;
-        if (event.data && event.data.message && event.data.message.id) {
+        if (event.data && event.data.message_id) {
+          messageId = event.data.message_id;
+        } else if (event.data && event.data.message && event.data.message.id) {
           messageId = event.data.message.id;
         } else if (event.message_id) {
           messageId = event.message_id;
@@ -495,7 +497,7 @@ exports.mailersendWebhook = functions.https.onRequest(async (req, res) => {
           continue;
         }
         
-        const status = event.type || event.event || 'unknown';
+        const status = event.data?.type || event.type || event.event || 'unknown';
         
         console.log(`📧 Processing event: ${status} for message: ${messageId}`);
         
