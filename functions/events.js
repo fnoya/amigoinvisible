@@ -476,6 +476,12 @@ exports.mailersendWebhook = functions.https.onRequest(async (req, res) => {
       }
     }
     
+    // Defensive: ensure events is an array
+    if (!Array.isArray(events)) {
+      console.warn('📧 Webhook: Events payload is not an array after normalization');
+      res.status(400).send('Invalid events payload');
+      return;
+    }
     console.log(`📧 Processing ${events.length} webhook events`);
     
     for (const event of events) {
