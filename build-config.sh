@@ -4,7 +4,6 @@
 # Este script reemplaza las variables del template con valores reales
 
 # Debug: Mostrar estado inicial
-echo "🔍 Debug: FIREBASE_API_KEY inicial = ${FIREBASE_API_KEY:0:20}..."
 echo "🔍 Debug: .env.local existe? $([ -f ".env.local" ] && echo "Sí" || echo "No")"
 
 # Cargar variables de .env.local solo si las variables no están ya definidas (para desarrollo local)
@@ -15,7 +14,6 @@ else
     echo "🔧 Usando variables de entorno existentes (CI/CD o producción)..."
 fi
 
-echo "🔍 Debug: FIREBASE_API_KEY después de load = ${FIREBASE_API_KEY:0:20}..."
 
 # Validar que las variables requeridas estén definidas
 if [ -z "$FIREBASE_API_KEY" ] || [ -z "$FIREBASE_PROJECT_ID" ]; then
