@@ -5,7 +5,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![MailerSend](https://img.shields.io/badge/MailerSend-0052CC?style=flat&logo=mail.ru&logoColor=white)](https://www.mailersend.com/)
-[![Deploy](https://github.com/yourusername/amigo-invisible/actions/workflows/deploy.yml/badge.svg)](https://github.com/yourusername/amigo-invisible/actions/workflows/deploy.yml)
+[![Deploy](https://github.com/fnoya/amigoinvisible/actions/workflows/deploy.yml/badge.svg)](https://github.com/fnoya/amigoinvisible/actions/workflows/deploy.yml)
 
 A complete Secret Santa (Amigo Invisible) web application built with Firebase and MailerSend. Organize gift exchanges effortlessly with automatic random assignment and email notifications.
 

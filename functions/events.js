@@ -505,7 +505,7 @@ exports.mailersendWebhook = functions.https.onRequest(async (req, res) => {
         
         console.log(`📧 Processing event: ${status} for message: ${messageId}`);
         
-        // Buscar el log correspondiente
+        // Buscar el log correspondiente usando collectionGroup
         const logsQuery = await admin.firestore()
           .collectionGroup('emailLogs')
           .where('messageId', '==', messageId)
@@ -523,7 +523,16 @@ exports.mailersendWebhook = functions.https.onRequest(async (req, res) => {
           console.warn(`📧 No log found for message ID: ${messageId}`);
         }
       } catch (eventError) {
-        console.error(`📧 Error processing individual webhook event:`, eventError, 'Event:', JSON.stringify(event, null, 2));
+        console.error(`📧 Error processing individual webhook event:`, {
+          error: eventError.message,
+          code: eventError.code,
+          messageId: event.data?.message_id || event.message_id || 'unknown',
+          eventType: event.data?.type || event.type || 'unknown'
+        });
+        console.error('📧 Full error details:', eventError);
+        console.error('📧 Event data:', JSON.stringify(event, null, 2));
+        
+        // No relanzar el error para que otros eventos puedan procesarse
       }
     }
 
