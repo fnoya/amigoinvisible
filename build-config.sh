@@ -3,6 +3,12 @@
 # Script de build para generar configuración de Firebase
 # Este script reemplaza las variables del template con valores reales
 
+# Cargar variables de .env.local si existe (para desarrollo)
+if [ -f ".env.local" ]; then
+    echo "🔧 Cargando variables desde .env.local..."
+    export $(cat .env.local | grep -v '^#' | xargs)
+fi
+
 # Variables de entorno (estas deberían estar en el entorno de deployment)
 FIREBASE_API_KEY="${FIREBASE_API_KEY:-AIzaSyCYf-AU9QPNb7hzsmC5NgFgP06WokXe2ZA}"
 FIREBASE_AUTH_DOMAIN="${FIREBASE_AUTH_DOMAIN:-amigoinvisible-elmejorgrupo.firebaseapp.com}"
